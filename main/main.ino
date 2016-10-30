@@ -2,7 +2,7 @@
 /// RIT SPEX HAB
 /// Main Flight Software
 /// October 20th, 2016
-/// 
+///
 /// Austin Bodzas
 ////////////////////////
 
@@ -20,7 +20,7 @@
 
 #define B_RATE     9600 // Serial baud rate
 #define BUFF_SIZE  480  // TODO tailor to packet size
-#define PACK_LIM   8    
+#define PACK_LIM   8
 #define CS_0       10   // CS0 pin for SPI
 
 // Magnetic field declination, RIT Nov, 21, 2016
@@ -28,8 +28,8 @@
 #define DECL       -11.44 // 11.44 degrees West
 
 // LSM9DS1 I2C
-#define LSM9DS1_M	 0x1E 
-#define LSM9DS1_AG 0x6B 
+#define LSM9DS1_M	 0x1E
+#define LSM9DS1_AG 0x6B
 
 
 
@@ -44,11 +44,13 @@ uint8_t buffer[BUFF_SIZE];
 uint8_t *cursor = buffer;
 uint8_t packet_count = 0;
 
+String stringBuffer = "";
+
 
 void setup() {
   Serial.begin(B_RATE);
 
-  while(!Serial) {
+  while (!Serial) {
   }
   Serial.print("Serial init success\n");
 
@@ -57,10 +59,11 @@ void setup() {
 }
 
 void loop() {
-  if(packet_count == PACK_LIM) {
+  if (packet_count == PACK_LIM) {
     write_buffer();
+    
   }
-  
+
   if (poll_elapsed > poll_rate ) {
     poll_sensors();
     poll_elapsed = 0;
@@ -79,10 +82,28 @@ void init() {
   }
 
   log_file = SD.open("tester.bin", FILE_WRITE);
+  //log_file = SD.open("tester.csv", FILE_WRITE);
 
-  if(!log_file) {
+  /*
+  stringBuffer += "temperature(C),";
+  stringBuffer += "pressure,";
+  stringBuffer += "altitude(m),";
+  stringBuffer += "humidity,";
+  stringBuffer += "gravityX,";
+  stringBuffer += "gravityY,";
+  stringBuffer += "gravityZ,";
+  stringBuffer += "accelerationX,";
+  stringBuffer += "accelerationY,";
+  stringBuffer += "accelerationZ,";
+  stringBuffer += "magnetometerX,";
+  stringBuffer += "magnetometerY,";
+  stringBuffer += "magnetometerZ,";
+  stringBuffer += "temperatureAlt(C),";
+  */
+
+  if (!log_file) {
     Serial.println("File failed to open");
-    for(;;){}
+    for (;;) {}
   }
 
   //////////////////////////////////////
@@ -96,10 +117,10 @@ void init() {
   bme280.settings.humidOverSample = 1;
   delay(10);
 
-  if(!bme280.begin()) {
+  if (!bme280.begin()) {
     Serial.println("BME280 failed to initiate");
 
-    for(;;){}
+    for (;;) {}
   }
 
   //////////////////////////////////////
@@ -108,10 +129,10 @@ void init() {
   imu.settings.device.mAddress = LSM9DS1_M;
   imu.settings.device.agAddress = LSM9DS1_AG;
 
-  if(!imu.begin()) {
+  if (!imu.begin()) {
     Serial.println("LSM9DS1 failed to initiate");
 
-    for( ;; ) {
+    for ( ;; ) {
     }
   }
 
@@ -134,6 +155,7 @@ void poll_sensors() {
   poll_mcp();
 
   packet_count++;
+  //write_string_buffer();
 }
 
 void poll_bme280() {
@@ -146,6 +168,14 @@ void poll_bme280() {
   buffer_float(pressure);
   buffer_float(alt_m);
   buffer_float(humidity);
+
+  //string based buffer for writing csv file
+  /*
+    stringBuffer += temp_c + ',';
+    stringBuffer += pressure + ',';
+    stringBuffer += alt_m + ',';
+    stringBuffer += humidity + ',';
+  */
 }
 
 void poll_imu() {
@@ -155,11 +185,25 @@ void poll_imu() {
   buffer_float(imu.calcGyro(imu.gy));
   buffer_float(imu.calcGyro(imu.gz));
 
+  //string based buffer for writing csv file
+  /*
+    stringBuffer += imu.calcGyro(imu.gx) + ',';
+    stringBuffer += imu.calcGyro(imu.gy) + ',';
+    stringBuffer += imu.calcGyro(imu.gz) + ',';
+  */
+
   imu.readAccel();
 
   buffer_float(imu.calcAccel(imu.ax));
   buffer_float(imu.calcAccel(imu.ay));
   buffer_float(imu.calcAccel(imu.az));
+
+  //string based buffer for writing csv file
+  /*
+    stringBuffer += imu.calcAccel(imu.ax) + ',';
+    stringBuffer += imu.calcAccel(imu.ay) + ',';
+    stringBuffer += imu.calcAccel(imu.az) + ',';
+  */
 
 
   imu.readMag();
@@ -168,6 +212,12 @@ void poll_imu() {
   buffer_float(imu.calcMag(imu.my));
   buffer_float(imu.calcMag(imu.mz));
 
+  //string based buffer for writing csv file
+  /*
+    stringBuffer += imu.calcMag(imu.mx) + ',';
+    stringBuffer += imu.calcMag(imu.my) + ',';
+    stringBuffer += imu.calcMag(imu.mz) + ',';
+  */
 }
 
 void poll_mcp() {
@@ -175,16 +225,20 @@ void poll_mcp() {
 
   buffer_float(mcp9808.readTempC());
 
+  //string based buffer for writing csv file
+  //stringBuffer += mcp9808.readTempC() + ',';
+
+
   mcp9808.shutdown_wake(1);
 }
 
-void buffer_float(float in){
+void buffer_float(float in) {
   memcpy(cursor, &in, sizeof(float));
   cursor = cursor + 4;
 }
 
-void write_buffer(){
-  if(log_file) {
+void write_buffer() {
+  if (log_file) {
     log_file.write(buffer, BUFF_SIZE);
   } else {
     Serial.println("Error opening log_file");
@@ -194,3 +248,17 @@ void write_buffer(){
   packet_count = 0;
   log_file.flush();
 }
+
+void write_String_Buffer() {
+  if (log_file) {
+    log_file.println(stringBuffer);
+  }
+
+  if (packet_count > max_packet_count) {
+    log_file.flush();
+    packet_count = 0;
+    stringBuffer = "";
+  }
+}
+
+
