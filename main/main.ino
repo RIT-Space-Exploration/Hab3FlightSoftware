@@ -43,6 +43,7 @@ uint16_t poll_rate = 100; // in milliseconds
 uint8_t buffer[BUFF_SIZE];
 uint8_t *cursor = buffer;
 uint8_t packet_count = 0;
+uint8_t max_packet_count = 10;
 
 String stringBuffer = "";
 
@@ -59,10 +60,12 @@ void setup() {
 }
 
 void loop() {
+  /*
   if (packet_count == PACK_LIM) {
     write_buffer();
     
   }
+  */
 
   if (poll_elapsed > poll_rate ) {
     poll_sensors();
@@ -81,10 +84,9 @@ void init() {
     return ;
   }
 
-  log_file = SD.open("tester.bin", FILE_WRITE);
-  //log_file = SD.open("tester.csv", FILE_WRITE);
+  //log_file = SD.open("tester.bin", FILE_WRITE);
+  log_file = SD.open("tester.csv", FILE_WRITE);
 
-  /*
   stringBuffer += "temperature(C),";
   stringBuffer += "pressure,";
   stringBuffer += "altitude(m),";
@@ -99,7 +101,6 @@ void init() {
   stringBuffer += "magnetometerY,";
   stringBuffer += "magnetometerZ,";
   stringBuffer += "temperatureAlt(C),";
-  */
 
   if (!log_file) {
     Serial.println("File failed to open");
@@ -155,7 +156,7 @@ void poll_sensors() {
   poll_mcp();
 
   packet_count++;
-  //write_string_buffer();
+  write_string_buffer();
 }
 
 void poll_bme280() {
@@ -164,79 +165,84 @@ void poll_bme280() {
   float alt_m    = bme280.readFloatAltitudeMeters();
   float humidity = bme280.readFloatHumidity();
 
+  /*
   buffer_float(temp_c);
   buffer_float(pressure);
   buffer_float(alt_m);
   buffer_float(humidity);
+  */
 
   //string based buffer for writing csv file
-  /*
     stringBuffer += temp_c + ',';
     stringBuffer += pressure + ',';
     stringBuffer += alt_m + ',';
     stringBuffer += humidity + ',';
-  */
 }
 
 void poll_imu() {
   imu.readGyro();
 
+  /*
   buffer_float(imu.calcGyro(imu.gx));
   buffer_float(imu.calcGyro(imu.gy));
   buffer_float(imu.calcGyro(imu.gz));
+  */
 
   //string based buffer for writing csv file
-  /*
     stringBuffer += imu.calcGyro(imu.gx) + ',';
     stringBuffer += imu.calcGyro(imu.gy) + ',';
     stringBuffer += imu.calcGyro(imu.gz) + ',';
-  */
 
   imu.readAccel();
 
+  /*
   buffer_float(imu.calcAccel(imu.ax));
   buffer_float(imu.calcAccel(imu.ay));
   buffer_float(imu.calcAccel(imu.az));
+  */
 
   //string based buffer for writing csv file
-  /*
     stringBuffer += imu.calcAccel(imu.ax) + ',';
     stringBuffer += imu.calcAccel(imu.ay) + ',';
     stringBuffer += imu.calcAccel(imu.az) + ',';
-  */
 
 
   imu.readMag();
 
+  /*
   buffer_float(imu.calcMag(imu.mx));
   buffer_float(imu.calcMag(imu.my));
   buffer_float(imu.calcMag(imu.mz));
+  */
 
   //string based buffer for writing csv file
-  /*
     stringBuffer += imu.calcMag(imu.mx) + ',';
     stringBuffer += imu.calcMag(imu.my) + ',';
     stringBuffer += imu.calcMag(imu.mz) + ',';
-  */
 }
 
 void poll_mcp() {
   mcp9808.shutdown_wake(0);
 
+  /*
   buffer_float(mcp9808.readTempC());
+  */
 
-  //string based buffer for writing csv file
-  //stringBuffer += mcp9808.readTempC() + ',';
+  // string based buffer for writing csv file
+  stringBuffer += mcp9808.readTempC() + ',';
 
 
   mcp9808.shutdown_wake(1);
 }
 
+/*
 void buffer_float(float in) {
   memcpy(cursor, &in, sizeof(float));
   cursor = cursor + 4;
 }
+*/
 
+/*
 void write_buffer() {
   if (log_file) {
     log_file.write(buffer, BUFF_SIZE);
@@ -248,6 +254,7 @@ void write_buffer() {
   packet_count = 0;
   log_file.flush();
 }
+*/
 
 void write_String_Buffer() {
   if (log_file) {
