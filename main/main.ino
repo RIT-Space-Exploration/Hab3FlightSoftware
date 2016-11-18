@@ -39,7 +39,7 @@ LSM9DS1 imu;
 Adafruit_MCP9808 mcp9808 = Adafruit_MCP9808();
 elapsedMillis poll_elapsed, since_init;
 
-uint16_t poll_rate = 100; // in milliseconds
+uint16_t poll_rate = 10; // in milliseconds
 uint8_t buffer[BUFF_SIZE];
 uint8_t *cursor = buffer;
 uint8_t packet_count = 0;
@@ -49,12 +49,14 @@ String stringBuffer = "";
 
 
 void setup() {
-  Serial.begin(B_RATE);
+  
+  /*
+   * Serial.begin(B_RATE);
 
   while (!Serial) {
   }
   Serial.print("Serial init success\n");
-
+*/
   init();
 
 }
@@ -68,7 +70,10 @@ void loop() {
   */
 
   if (poll_elapsed > poll_rate ) {
+    stringBuffer += String(since_init);
+    stringBuffer += ',';
     poll_sensors();
+    stringBuffer += '\n';
     poll_elapsed = 0;
   }
 
@@ -85,8 +90,18 @@ void init() {
   }
 
   //log_file = SD.open("tester.bin", FILE_WRITE);
-  log_file = SD.open("tester.csv", FILE_WRITE);
-
+  String baseFile = "tester";
+  String extension = ".csv";
+  String fileName = "";
+  int iteration = 0;
+  do{
+     fileName = baseFile + iteration + extension;
+     Serial.println(fileName);
+     iteration++;
+  } while(SD.exists(fileName.c_str()));
+  log_file = SD.open(fileName.c_str(), FILE_WRITE);
+  Serial.println(fileName);
+  stringBuffer += "timeSinceInit(s),";
   stringBuffer += "temperature(C),";
   stringBuffer += "pressure,";
   stringBuffer += "altitude(m),";
@@ -101,6 +116,11 @@ void init() {
   stringBuffer += "magnetometerY,";
   stringBuffer += "magnetometerZ,";
   stringBuffer += "temperatureAlt(C),";
+
+  //stringBuffer =+ "/n";
+  write_string_buffer();
+  stringBuffer = "";
+  
 
   if (!log_file) {
     Serial.println("File failed to open");
@@ -150,7 +170,7 @@ void init() {
 }
 
 void poll_sensors() {
-  buffer_float(since_init);
+  //buffer_float(since_init);
   poll_bme280();
   poll_imu();
   poll_mcp();
@@ -173,10 +193,14 @@ void poll_bme280() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += temp_c + ',';
-    stringBuffer += pressure + ',';
-    stringBuffer += alt_m + ',';
-    stringBuffer += humidity + ',';
+    stringBuffer += temp_c;
+    stringBuffer += ',';
+    stringBuffer += pressure;
+    stringBuffer += ',';
+    stringBuffer += alt_m;
+    stringBuffer += ',';
+    stringBuffer += humidity;
+    stringBuffer += ',';
 }
 
 void poll_imu() {
@@ -189,9 +213,12 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += imu.calcGyro(imu.gx) + ',';
-    stringBuffer += imu.calcGyro(imu.gy) + ',';
-    stringBuffer += imu.calcGyro(imu.gz) + ',';
+    stringBuffer += imu.calcGyro(imu.gx);
+    stringBuffer += ',';
+    stringBuffer += imu.calcGyro(imu.gy);
+    stringBuffer += ',';
+    stringBuffer += imu.calcGyro(imu.gz);
+    stringBuffer += ',';
 
   imu.readAccel();
 
@@ -202,9 +229,12 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += imu.calcAccel(imu.ax) + ',';
-    stringBuffer += imu.calcAccel(imu.ay) + ',';
-    stringBuffer += imu.calcAccel(imu.az) + ',';
+    stringBuffer += imu.calcAccel(imu.ax);
+    stringBuffer += ',';
+    stringBuffer += imu.calcAccel(imu.ay);
+    stringBuffer += ',';
+    stringBuffer += imu.calcAccel(imu.az);
+    stringBuffer += ',';
 
 
   imu.readMag();
@@ -216,9 +246,12 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += imu.calcMag(imu.mx) + ',';
-    stringBuffer += imu.calcMag(imu.my) + ',';
-    stringBuffer += imu.calcMag(imu.mz) + ',';
+    stringBuffer += imu.calcMag(imu.mx);
+    stringBuffer += ',';
+    stringBuffer += imu.calcMag(imu.my);
+    stringBuffer += ',';
+    stringBuffer += imu.calcMag(imu.mz);
+    stringBuffer += ',';
 }
 
 void poll_mcp() {
@@ -229,7 +262,8 @@ void poll_mcp() {
   */
 
   // string based buffer for writing csv file
-  stringBuffer += mcp9808.readTempC() + ',';
+  stringBuffer += mcp9808.readTempC();
+  stringBuffer += ',';
 
 
   mcp9808.shutdown_wake(1);
@@ -256,7 +290,7 @@ void write_buffer() {
 }
 */
 
-void write_String_Buffer() {
+void write_string_buffer() {
   if (log_file) {
     log_file.println(stringBuffer);
   }
