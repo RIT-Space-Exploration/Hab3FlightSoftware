@@ -44,7 +44,7 @@ uint8_t buffer[BUFF_SIZE];
 uint8_t *cursor = buffer;
 uint8_t packet_count = 0;
 uint8_t max_packet_count = 10;
-
+uint8_t precision = 7;
 String stringBuffer = "";
 
 
@@ -193,13 +193,13 @@ void poll_bme280() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += temp_c;
+    stringBuffer += String(temp_c, precision);
     stringBuffer += ',';
-    stringBuffer += pressure;
+    stringBuffer += String(pressure, precision);
     stringBuffer += ',';
     stringBuffer += alt_m;
     stringBuffer += ',';
-    stringBuffer += humidity;
+    stringBuffer += String(humidity, precision);
     stringBuffer += ',';
 }
 
@@ -213,11 +213,11 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += imu.calcGyro(imu.gx);
+    stringBuffer += String(imu.calcGyro(imu.gx), precision);
     stringBuffer += ',';
-    stringBuffer += imu.calcGyro(imu.gy);
+    stringBuffer += String(imu.calcGyro(imu.gy), precision);
     stringBuffer += ',';
-    stringBuffer += imu.calcGyro(imu.gz);
+    stringBuffer += String(imu.calcGyro(imu.gz), precision);
     stringBuffer += ',';
 
   imu.readAccel();
@@ -229,13 +229,13 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += imu.calcAccel(imu.ax);
+    stringBuffer += String(imu.calcAccel(imu.ax), precision);
     stringBuffer += ',';
-    stringBuffer += imu.calcAccel(imu.ay);
+    stringBuffer += String(imu.calcAccel(imu.ay), precision);
     stringBuffer += ',';
-    stringBuffer += imu.calcAccel(imu.az);
+    stringBuffer += String(imu.calcAccel(imu.az), precision);
     stringBuffer += ',';
-
+    Serial.printf("%f\n", imu.calcAccel(imu.az));
 
   imu.readMag();
 
@@ -246,11 +246,11 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += imu.calcMag(imu.mx);
+    stringBuffer += String(imu.calcMag(imu.mx), precision);
     stringBuffer += ',';
-    stringBuffer += imu.calcMag(imu.my);
+    stringBuffer += String(imu.calcMag(imu.my), precision);
     stringBuffer += ',';
-    stringBuffer += imu.calcMag(imu.mz);
+    stringBuffer += String(imu.calcMag(imu.mz), precision);
     stringBuffer += ',';
 }
 
@@ -262,7 +262,7 @@ void poll_mcp() {
   */
 
   // string based buffer for writing csv file
-  stringBuffer += mcp9808.readTempC();
+  stringBuffer += String(mcp9808.readTempC(), precision);
   stringBuffer += ',';
 
 
