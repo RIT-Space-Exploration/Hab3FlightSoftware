@@ -74,7 +74,7 @@ void loop() {
     stringBuffer += String(since_init);
     stringBuffer += ',';
     poll_sensors();
-    stringBuffer += '\n';
+    // stringBuffer += '\n';
     poll_elapsed = 0;
   }
 
@@ -326,6 +326,7 @@ void write_buffer() {
 void write_string_buffer() {
   if (log_file) {
     log_file.println(stringBuffer);
+    stringBuffer = "";
   }
 
   if (packet_count > max_packet_count) {
