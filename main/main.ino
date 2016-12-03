@@ -35,6 +35,7 @@
 
 File log_file;
 BME280 bme280;
+BME280 ball280;
 LSM9DS1 imu;
 Adafruit_MCP9808 mcp9808 = Adafruit_MCP9808();
 elapsedMillis poll_elapsed, since_init;
@@ -106,6 +107,8 @@ void init() {
   stringBuffer += "pressure,";
   stringBuffer += "altitude(m),";
   stringBuffer += "humidity,";
+  stringBuffer += "balloonTemp,";
+  stringBuffer += "balloonPressure,";
   stringBuffer += "gravityX,";
   stringBuffer += "gravityY,";
   stringBuffer += "gravityZ,";
@@ -133,13 +136,32 @@ void init() {
   bme280.settings.I2CAddress      = 0x77;
   bme280.settings.runMode         = 3;
   bme280.settings.tStandby        = 0;
-  bme280.settings.filter          = 0;
+  bme280.settings.filter          = 4;
   bme280.settings.tempOverSample  = 1;
   bme280.settings.humidOverSample = 1;
+  bme280.settings.pressOverSample = 5;
   delay(10);
 
   if (!bme280.begin()) {
     Serial.println("BME280 failed to initiate");
+
+    for (;;) {}
+  }
+
+  //////////////////////////////////////
+  // Setup ball280 BME280
+  ball280.settings.commInterface   = I2C_MODE;
+  ball280.settings.I2CAddress      = 0x76;
+  ball280.settings.runMode         = 3;
+  ball280.settings.tStandby        = 0;
+  ball280.settings.filter          = 4;
+  ball280.settings.tempOverSample  = 1;
+  ball280.settings.humidOverSample = 1;
+  ball280.settings.pressOverSample = 5;
+  delay(10);
+
+  if (!ball280.begin()) {
+    Serial.println("ball280 failed to initiate");
 
     for (;;) {}
   }
@@ -172,6 +194,7 @@ void init() {
 void poll_sensors() {
   //buffer_float(since_init);
   poll_bme280();
+  poll_ball280();
   poll_imu();
   poll_mcp();
 
@@ -200,6 +223,17 @@ void poll_bme280() {
     stringBuffer += alt_m;
     stringBuffer += ',';
     stringBuffer += String(humidity, precision);
+    stringBuffer += ',';
+}
+
+void poll_ball280() {
+    float temp_c   = ball280.readTempC();
+    float pressure = ball280.readFloatPressure();
+  //string based buffer for writing csv file
+
+    stringBuffer += String(temp_c, precision);
+    stringBuffer += ',';
+    stringBuffer += String(pressure, precision);
     stringBuffer += ',';
 }
 
@@ -235,7 +269,6 @@ void poll_imu() {
     stringBuffer += ',';
     stringBuffer += String(imu.calcAccel(imu.az), precision);
     stringBuffer += ',';
-    Serial.printf("%f\n", imu.calcAccel(imu.az));
 
   imu.readMag();
 
