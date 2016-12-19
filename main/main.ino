@@ -1,4 +1,4 @@
-////////////////////////
+///////////////////////
 /// RIT SPEX HAB
 /// Main Flight Software
 /// October 20th, 2016
@@ -87,8 +87,6 @@ void init() {
 
   if (!SD.begin(CS_0)) {
     Serial.print("SD card initilization fail\n");
-    for(;;) {
-    }
   }
 
   //log_file = SD.open("tester.bin", FILE_WRITE);
@@ -128,7 +126,6 @@ void init() {
 
   if (!log_file) {
     Serial.println("File failed to open");
-    for (;;) {}
   }
 
   //////////////////////////////////////
@@ -145,8 +142,6 @@ void init() {
 
   if (!bme280.begin()) {
     Serial.println("BME280 failed to initiate");
-
-    for (;;) {}
   }
 
   //////////////////////////////////////
@@ -163,8 +158,6 @@ void init() {
 
   if (!ball280.begin()) {
     Serial.println("ball280 failed to initiate");
-
-    for (;;) {}
   }
 
   //////////////////////////////////////
@@ -175,18 +168,12 @@ void init() {
 
   if (!imu.begin()) {
     Serial.println("LSM9DS1 failed to initiate");
-
-    for ( ;; ) {
-    }
   }
 
   //////////////////////////////////////
   // Setup MCP9808
   if (!mcp9808.begin()) {
     Serial.println("MCP9808 failed to initiate");
-
-    for ( ;; ) {
-    }
   }
 
   Serial.println("Initilization success");
