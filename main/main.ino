@@ -6,7 +6,6 @@
 /// Austin Bodzas
 ////////////////////////
 
-// #include <Wire.h>
 #include <stdint.h>
 
 #include <SPI.h>
@@ -48,38 +47,38 @@ uint8_t max_packet_count = 10;
 uint8_t precision = 7;
 String stringBuffer = "";
 
-
+// We should have a toggle for debugging through serial vs flight mode
+// Right now the setup() --> Init() is kinda pointless
 void setup() {
-  
   /*
-   * Serial.begin(B_RATE);
+  Serial.begin(B_RATE);
 
   while (!Serial) {
   }
   Serial.print("Serial init success\n");
-*/
+  */
   init();
-
 }
 
+// Logic loop for the program
 void loop() {
   /*
   if (packet_count == PACK_LIM) {
     write_buffer();
-    
+
   }
   */
 
+  // Polls sensors according to poll rate
   if (poll_elapsed > poll_rate ) {
     stringBuffer += String(since_init);
     stringBuffer += ',';
     poll_sensors();
-    // stringBuffer += '\n';
     poll_elapsed = 0;
   }
-
 }
 
+// Initializes sensors and opens file for IO
 void init() {
   //////////////////////////////////////
   // Setup SD Card
@@ -90,6 +89,7 @@ void init() {
   }
 
   //log_file = SD.open("tester.bin", FILE_WRITE);
+  //Generates a filename with unique extension for multiple runs
   String baseFile = "tester";
   String extension = ".csv";
   String fileName = "";
@@ -101,6 +101,8 @@ void init() {
   } while(SD.exists(fileName.c_str()));
   log_file = SD.open(fileName.c_str(), FILE_WRITE);
   Serial.println(fileName);
+
+  // Create CSV headers
   stringBuffer += "timeSinceInit(s),";
   stringBuffer += "temperature(C),";
   stringBuffer += "pressure,";
@@ -108,9 +110,9 @@ void init() {
   stringBuffer += "humidity,";
   stringBuffer += "balloonTemp,";
   stringBuffer += "balloonPressure,";
-  stringBuffer += "gravityX,";
-  stringBuffer += "gravityY,";
-  stringBuffer += "gravityZ,";
+  stringBuffer += "gyroscopeX,";
+  stringBuffer += "gyroscopeY,";
+  stringBuffer += "gyroscopeZ,";
   stringBuffer += "accelerationX,";
   stringBuffer += "accelerationY,";
   stringBuffer += "accelerationZ,";
@@ -120,9 +122,9 @@ void init() {
   stringBuffer += "temperatureAlt(C),";
 
   //stringBuffer =+ "/n";
-  write_string_buffer();
+  write_string_buffer(); //Writes headers to file
   stringBuffer = "";
-  
+
 
   if (!log_file) {
     Serial.println("File failed to open");
@@ -175,10 +177,10 @@ void init() {
   if (!mcp9808.begin()) {
     Serial.println("MCP9808 failed to initiate");
   }
-
   Serial.println("Initilization success");
 }
 
+// Polls all the sensors in order
 void poll_sensors() {
   //buffer_float(since_init);
   poll_bme280();
@@ -190,6 +192,7 @@ void poll_sensors() {
   write_string_buffer();
 }
 
+// Onboard altimeter
 void poll_bme280() {
   float temp_c   = bme280.readTempC();
   float pressure = bme280.readFloatPressure();
@@ -204,27 +207,29 @@ void poll_bme280() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += String(temp_c, precision);
-    stringBuffer += ',';
-    stringBuffer += String(pressure, precision);
-    stringBuffer += ',';
-    stringBuffer += alt_m;
-    stringBuffer += ',';
-    stringBuffer += String(humidity, precision);
-    stringBuffer += ',';
+  stringBuffer += String(temp_c, precision);
+  stringBuffer += ',';
+  stringBuffer += String(pressure, precision);
+  stringBuffer += ',';
+  stringBuffer += alt_m;
+  stringBuffer += ',';
+  stringBuffer += String(humidity, precision);
+  stringBuffer += ',';
 }
 
+// Balloon plug Altimeter
 void poll_ball280() {
-    float temp_c   = ball280.readTempC();
-    float pressure = ball280.readFloatPressure();
-  //string based buffer for writing csv file
+  float temp_c   = ball280.readTempC();
+  float pressure = ball280.readFloatPressure();
 
-    stringBuffer += String(temp_c, precision);
-    stringBuffer += ',';
-    stringBuffer += String(pressure, precision);
-    stringBuffer += ',';
+  //string based buffer for writing csv file
+  stringBuffer += String(temp_c, precision);
+  stringBuffer += ',';
+  stringBuffer += String(pressure, precision);
+  stringBuffer += ',';
 }
 
+// 9 DOF Inertial Measurement Unit
 void poll_imu() {
   imu.readGyro();
 
@@ -235,12 +240,12 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += String(imu.calcGyro(imu.gx), precision);
-    stringBuffer += ',';
-    stringBuffer += String(imu.calcGyro(imu.gy), precision);
-    stringBuffer += ',';
-    stringBuffer += String(imu.calcGyro(imu.gz), precision);
-    stringBuffer += ',';
+  stringBuffer += String(imu.calcGyro(imu.gx), precision);
+  stringBuffer += ',';
+  stringBuffer += String(imu.calcGyro(imu.gy), precision);
+  stringBuffer += ',';
+  stringBuffer += String(imu.calcGyro(imu.gz), precision);
+  stringBuffer += ',';
 
   imu.readAccel();
 
@@ -251,12 +256,12 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += String(imu.calcAccel(imu.ax), precision);
-    stringBuffer += ',';
-    stringBuffer += String(imu.calcAccel(imu.ay), precision);
-    stringBuffer += ',';
-    stringBuffer += String(imu.calcAccel(imu.az), precision);
-    stringBuffer += ',';
+  stringBuffer += String(imu.calcAccel(imu.ax), precision);
+  stringBuffer += ',';
+  stringBuffer += String(imu.calcAccel(imu.ay), precision);
+  stringBuffer += ',';
+  stringBuffer += String(imu.calcAccel(imu.az), precision);
+  stringBuffer += ',';
 
   imu.readMag();
 
@@ -267,28 +272,42 @@ void poll_imu() {
   */
 
   //string based buffer for writing csv file
-    stringBuffer += String(imu.calcMag(imu.mx), precision);
-    stringBuffer += ',';
-    stringBuffer += String(imu.calcMag(imu.my), precision);
-    stringBuffer += ',';
-    stringBuffer += String(imu.calcMag(imu.mz), precision);
-    stringBuffer += ',';
+  stringBuffer += String(imu.calcMag(imu.mx), precision);
+  stringBuffer += ',';
+  stringBuffer += String(imu.calcMag(imu.my), precision);
+  stringBuffer += ',';
+  stringBuffer += String(imu.calcMag(imu.mz), precision);
+  stringBuffer += ',';
 }
 
+// Reads external Temperature Sensor
 void poll_mcp() {
-  mcp9808.shutdown_wake(0);
-
-  /*
-  buffer_float(mcp9808.readTempC());
-  */
+  mcp9808.shutdown_wake(0); // Wake up sensors
 
   // string based buffer for writing csv file
   stringBuffer += String(mcp9808.readTempC(), precision);
   stringBuffer += ',';
-
-
-  mcp9808.shutdown_wake(1);
+  /*
+  buffer_float(mcp9808.readTempC());
+  */
+  mcp9808.shutdown_wake(1); // Sleep sensor
 }
+
+// Writes the current string buffer to file
+// If the SD buffer is full, it flushes to the SD card
+void write_string_buffer() {
+  if (log_file) {
+    log_file.println(stringBuffer);
+    stringBuffer = "";
+  }
+
+  if (packet_count > max_packet_count) {
+    log_file.flush();
+    packet_count = 0;
+    stringBuffer = "";
+  }
+}
+
 
 /*
 void buffer_float(float in) {
@@ -310,18 +329,3 @@ void write_buffer() {
   log_file.flush();
 }
 */
-
-void write_string_buffer() {
-  if (log_file) {
-    log_file.println(stringBuffer);
-    stringBuffer = "";
-  }
-
-  if (packet_count > max_packet_count) {
-    log_file.flush();
-    packet_count = 0;
-    stringBuffer = "";
-  }
-}
-
-
